@@ -59,12 +59,12 @@ plt.show()
 rand_data = np.random.normal(loc=0, scale=1, size=1000)
 #plt.plot(rand_data)
 #plt.show()
-#print(len(rand_data))
+
 
 # First derivative of random signal
 random_first_derivative = derivative(rand_data,1000)
 rand_data_1 = rand_data[:-1]
-#plt.plot(rand_data,random_first_derivative)
+#plt.plot(rand_data_1,random_first_derivative)
 #plt.show()
 
 # Second derivative of random signal
