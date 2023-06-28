@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 import sys
-
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 
 def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
     """
@@ -137,5 +138,156 @@ def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
 x = np.arange(0,1000,0.1)   # start,stop,step
 dx = np.sin(x/5)
 
-tau = AMI_Stergiou(dx,15)
-print(tau)
+
+#x_1 = dx[:-2]
+#y_1 = dx[1:-1]
+#z_1 = dx[2:]
+#x_3 = dx[:-6]
+#y_3 = dx[3:-3]
+#z_3 = dx[6:]
+#
+#x_12 = dx[:-24]
+#y_12 = dx[12:-12]
+#z_12 = dx[24:]
+#
+#x_200 = dx[:-400]
+#y_200 = dx[200:-200]
+#z_200 = dx[400:]
+#
+#
+#x_1000 = dx[:-2000]
+#y_1000 = dx[1000:-1000]
+#z_1000 = dx[2000:]
+#
+#print(len(x_1))
+#print(len(y_1))
+#print(len(z_1))
+#print(len(x_3))
+#print(len(y_3))
+#print(len(z_3))
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_1, y_1, z_1, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_3, y_3, z_3, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_12, y_12, z_12, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_200, y_200, z_200, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_1000, y_1000, z_1000, 'red')
+#plt.show()
+
+def lorenz(x, y, z, s=10, r=28, b=2.667):
+    '''
+    x, y, z: Points
+    s, r, b: Parameters defining the Lorenz attractor
+
+    x_dot, y_dot, z_dot: Values of the Lorenz attractor's partial derivatives
+    at the point x, y, z
+    '''
+
+    x_dot = s * (y - x)
+    y_dot = r * x - y - x * z
+    z_dot = x * y - b * z
+
+    return x_dot, y_dot, z_dot
+
+
+# Set other parameters
+dt = 0.01
+num_steps = 10000
+
+# Initial values require one or more
+xs = np.empty(num_steps + 1)
+ys = np.empty(num_steps + 1)
+zs = np.empty(num_steps + 1)
+
+# Initial values setting
+xs[0], ys[0], zs[0] = (0., 1., 1.05)
+
+# Step through "time", calculating the partial derivatives at the current point
+# and estimate the next point
+for i in range(num_steps):
+    x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i])
+    xs[i + 1] = xs[i] + (x_dot * dt)
+    ys[i + 1] = ys[i] + (y_dot * dt)
+    zs[i + 1] = zs[i] + (z_dot * dt)
+
+
+x_1 = xs[:-2]
+y_1 = xs[1:-1]
+z_1 = xs[2:]
+x_3 = xs[:-6]
+y_3 = xs[3:-3]
+z_3 = xs[6:]
+
+x_12 = xs[:-24]
+y_12 = xs[12:-12]
+z_12 = xs[24:]
+
+x_200 = xs[:-400]
+y_200 = xs[200:-200]
+z_200 = xs[400:]
+
+
+x_1000 = xs[:-2000]
+y_1000 = xs[1000:-1000]
+z_1000 = xs[2000:]
+
+print(len(x_1))
+print(len(y_1))
+print(len(z_1))
+print(len(x_3))
+print(len(y_3))
+print(len(z_3))
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_1, y_1, z_1, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_3, y_3, z_3, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_12, y_12, z_12, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_200, y_200, z_200, 'red')
+#plt.show()
+#
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_1000, y_1000, z_1000, 'red')
+#plt.show()
+
+x_1 = xs[:-2]
+y_1 = xs[1:-1]
+z_1 = xs[2:]
+
+x_30 = xs[:-60]
+y_30 = xs[30:-30]
+z_30 = xs[60:]
+
+x_11 = xs[:-22]
+y_11 = xs[11:-11]
+z_11 = xs[22:]
+
+ax = plt.axes(projection='3d')
+ax.plot3D(x_1, y_1, z_1, 'red')
+plt.show()
+
+ax = plt.axes(projection='3d')
+ax.plot3D(x_30, y_30, z_30, 'red')
+plt.show()
+
+ax = plt.axes(projection='3d')
+ax.plot3D(x_11, y_11, z_11, 'red')
+plt.show()

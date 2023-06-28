@@ -21,6 +21,10 @@ x = np.arange(0,1000,0.1)   # start,stop,step
 dx = np.sin(x/5)
 #plt.plot(x,dx)
 #plt.show()
+#for i in range(len(dx)):
+#    print(dx[i])
+#print(len(dx))
+#print(type(dx))
 
 # First derivative of periodic signal
 periodic_first_derivative = derivative(dx,10000)
@@ -32,9 +36,9 @@ dx1 = dx[:-1]
 periodic_second_derivative = derivative(periodic_first_derivative,10000)
 periodic_first_derivative1 = periodic_first_derivative[:-1]
 dx2 = dx1[:-1]
-#ax = plt.axes(projection='3d')
-#ax.plot3D(dx2, periodic_first_derivative, periodic_second_derivative, 'red')
-#plt.show()
+ax = plt.axes(projection='3d')
+ax.plot3D(dx2, periodic_first_derivative1, periodic_second_derivative, 'red')
+plt.show()
 
 figure=plt.figure()
 plt.suptitle('Periodic Signal')
