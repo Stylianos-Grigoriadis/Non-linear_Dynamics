@@ -280,14 +280,23 @@ x_11 = xs[:-22]
 y_11 = xs[11:-11]
 z_11 = xs[22:]
 
-ax = plt.axes(projection='3d')
-ax.plot3D(x_1, y_1, z_1, 'red')
-plt.show()
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_1, y_1, z_1, 'red')
+#plt.show()
 
-ax = plt.axes(projection='3d')
-ax.plot3D(x_30, y_30, z_30, 'red')
-plt.show()
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_30, y_30, z_30, 'red')
+#plt.show()
 
-ax = plt.axes(projection='3d')
-ax.plot3D(x_11, y_11, z_11, 'red')
-plt.show()
+#ax = plt.axes(projection='3d')
+#ax.plot3D(x_11, y_11, z_11, 'red')
+#plt.show()
+
+x_11_3 = xs[:-22]
+y_11_3 = xs[11:-11]
+z_11_3 = xs[22:]
+
+
+for i in range(len(x_11)):
+    print(x_11[i] ,y_11[i], z_11[i])
+
