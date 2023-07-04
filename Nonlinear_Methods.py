@@ -1,133 +1,96 @@
 import numpy as np
 import scipy.sparse as sp
 import matplotlib.pyplot as plt
-def lorenz(x, y, z, s=10, r=28, b=2.667):
-    '''
-    x, y, z: Points
-    s, r, b: Parameters defining the Lorenz attractor
-
-    x_dot, y_dot, z_dot: Values of the Lorenz attractor's partial derivatives
-    at the point x, y, z
-    '''
-
-    x_dot = s * (y - x)
-    y_dot = r * x - y - x * z
-    z_dot = x * y - b * z
-
-    return x_dot, y_dot, z_dot
 
 
-# Set other parameters
-dt = 0.01
-num_steps = 10000
-
-# Initial values require one or more
-xs = np.empty(num_steps + 1)
-ys = np.empty(num_steps + 1)
-zs = np.empty(num_steps + 1)
-
-# Initial values setting
-xs[0], ys[0], zs[0] = (0., 1., 1.05)
-
-# Step through "time", calculating the partial derivatives at the current point
-# and estimate the next point
-for i in range(num_steps):
-    x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i])
-    xs[i + 1] = xs[i] + (x_dot * dt)
-    ys[i + 1] = ys[i] + (y_dot * dt)
-    zs[i + 1] = zs[i] + (z_dot * dt)
-
-
-
-
-
-def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
+def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
+    # Start of Stergiou code
     """
-    inputs    - data, column oriented time series
-              - L, maximal lag to which AMI will be calculated
-              - bins, number of bins to use in the calculation, if empty an
-                adaptive formula will be used
-              - to_matlab, an option for MATLAB users of the code, if MATLAB
-                datatypes are needed for output, use this to have them
-                returned with proper types. Default is false.
+        inputs    - data, column oriented time series
+                  - L, maximal lag to which AMI will be calculated
+                  - bins, number of bins to use in the calculation, if empty an
+                    adaptive formula will be used
+                  - to_matlab, an option for MATLAB users of the code, if MATLAB
+                    datatypes are needed for output, use this to have them
+                    returned with proper types. Default is false.
 
-                Only use if you have 'matlab.engine' installed in your current
-                Python env.
+                    Only use if you have 'matlab.engine' installed in your current
+                    Python env.
 
-                Note: this cannot be installed through the usual conda or pip
-                commands, search online to view resources to help in installing
-                'matlab.engine' for Python.
+                    Note: this cannot be installed through the usual conda or pip
+                    commands, search online to view resources to help in installing
+                    'matlab.engine' for Python.
 
-    outputs   - tau, first minimum in the AMI vs lag plot
-              - v_AMI, vector of AMI values and associated lags
+        outputs   - tau, first minimum in the AMI vs lag plot
+                  - v_AMI, vector of AMI values and associated lags
 
-    inputs    - x, single column array with the same length as y.
-              - y, single column array with the same length as x.
-    outputs   - ami, the average mutual information between the two arrays
+        inputs    - x, single column array with the same length as y.
+                  - y, single column array with the same length as x.
+        outputs   - ami, the average mutual information between the two arrays
 
-    Remarks
-    - This code uses average mutual information to find an appropriate lag
-      with which to perform phase space reconstruction. It is based on a
-      histogram method of calculating AMI.
-    - In the case a value of atu could not be found before L the code will
-      automatically re-execute with a higher value of L, and will continue to
-      re-execute up to a ceiling value of L.
+        Remarks
+        - This code uses average mutual information to find an appropriate lag
+          with which to perform phase space reconstruction. It is based on a
+          histogram method of calculating AMI.
+        - In the case a value of atu could not be found before L the code will
+          automatically re-execute with a higher value of L, and will continue to
+          re-execute up to a ceiling value of L.
 
-    Future Work
-    - None currently.
+        Future Work
+        - None currently.
 
-    Mar 2015 - Modified by Ben Senderling, email unonbcf@unomaha.edu
-              - Modified code to output a plot and notify the user if a value
-                of tau could not be found.
-    Sep 2015 - Modified by Ben Senderling, email unonbcf@unomaha.edu
-              - Previously the number of bins was hard coded at 128. This
-                created a large amount of error in calculated AMI value and
-                vastly decreased the sensitivity of the calculation to changes
-                in lag. The number of bins was replaced with an adaptive
-                formula well known in statistics. (Scott 1979
-              - The previous plot output was removed.
-    Oct 2017 - Modified by Ben Senderling, email unonbcf@unomaha.edu
-              - Added print commands to display progress.
-    May 2019 - Modified by Ben Senderling, email unonbcf@unomaha.edu
-              - In cases where L was not high enough to find a minimun the
-                code would reexecute with a higher L, and the binned data.
-                This second part is incorrect and was corrected by using
-                data2.
-              - The reexecution part did not have the correct input
-                parameters.
-    Copyright 2020 Nonlinear Analysis Core, Center for Human Movement
-    Variability, University of Nebraska at Omaha
+        Mar 2015 - Modified by Ben Senderling, email unonbcf@unomaha.edu
+                  - Modified code to output a plot and notify the user if a value
+                    of tau could not be found.
+        Sep 2015 - Modified by Ben Senderling, email unonbcf@unomaha.edu
+                  - Previously the number of bins was hard coded at 128. This
+                    created a large amount of error in calculated AMI value and
+                    vastly decreased the sensitivity of the calculation to changes
+                    in lag. The number of bins was replaced with an adaptive
+                    formula well known in statistics. (Scott 1979
+                  - The previous plot output was removed.
+        Oct 2017 - Modified by Ben Senderling, email unonbcf@unomaha.edu
+                  - Added print commands to display progress.
+        May 2019 - Modified by Ben Senderling, email unonbcf@unomaha.edu
+                  - In cases where L was not high enough to find a minimun the
+                    code would reexecute with a higher L, and the binned data.
+                    This second part is incorrect and was corrected by using
+                    data2.
+                  - The reexecution part did not have the correct input
+                    parameters.
+        Copyright 2020 Nonlinear Analysis Core, Center for Human Movement
+        Variability, University of Nebraska at Omaha
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are
-    met:
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are
+        met:
 
-    1. Redistributions of source code must retain the above copyright notice,
-        this list of conditions and the following disclaimer.
+        1. Redistributions of source code must retain the above copyright notice,
+            this list of conditions and the following disclaimer.
 
-    2. Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
+        2. Redistributions in binary form must reproduce the above copyright
+            notice, this list of conditions and the following disclaimer in the
+            documentation and/or other materials provided with the distribution.
 
-    3. Neither the name of the copyright holder nor the names of its
-        contributors may be used to endorse or promote products derived from
-        this software without specific prior written permission.
+        3. Neither the name of the copyright holder nor the names of its
+            contributors may be used to endorse or promote products derived from
+            this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-    PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-    """
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+        IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+        THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+        PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+        CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+        PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+        PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+        NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+        SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        """
     eps = np.finfo(float).eps  # smallest floating point value
 
-    if isinstance(L, int):
+    if isinstance(limit_of_time_lag, int):
         N = len(data)
 
         data = np.array(data)
@@ -144,15 +107,15 @@ def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
         y = np.array(y,
                      dtype=int)  # converts the vector of double vals from data2 into a list of integers from 0 to overlap (where overlap is N-L).
 
-        v = np.zeros((L, 1))  # preallocate the vector
-        overlap = N - L
+        v = np.zeros((limit_of_time_lag, 1))  # preallocate the vector
+        overlap = N - limit_of_time_lag
         increment = 1 / overlap
 
         pA = sp.csr_matrix((np.full(overlap, increment), (y[0:overlap], np.ones(overlap, dtype=int)))).toarray()[:, 1]
 
-        v = np.zeros((2, L))
+        v = np.zeros((2, limit_of_time_lag))
 
-        for lag in range(L):  # used to be from 0:L-1 (BS)
+        for lag in range(limit_of_time_lag):  # used to be from 0:L-1 (BS)
             v[0, lag] = lag
 
             pB = sp.csr_matrix(
@@ -166,7 +129,7 @@ def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
             v[1, lag] = np.sum(
                 np.multiply(AB, np.log2(np.divide(AB, np.multiply(pA[A], pB[B])))))  # Average Mutual Information
 
-        tau = np.array(np.full((L, 2), -1, dtype=float))
+        tau = np.array(np.full((limit_of_time_lag, 2), -1, dtype=float))
 
         j = 0
         for i in range(v.shape[1] - 1):  # Finds first minimum
@@ -186,11 +149,10 @@ def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
         v_AMI = v
         ami = v_AMI
         print("edw eisai")
-        return (tau, ami)
 
-    elif isinstance(L, np.ndarray) or isinstance(L, list):
+    elif isinstance(limit_of_time_lag, np.ndarray) or isinstance(limit_of_time_lag, list):
         x = data if isinstance(data, np.ndarray) else np.array(data)
-        y = L if isinstance(L, np.ndarray) else np.array(L)
+        y = limit_of_time_lag if isinstance(limit_of_time_lag, np.ndarray) else np.array(limit_of_time_lag)
 
         if len(x) != len(y):
             raise ValueError('X and Y must be the same size.')
@@ -216,107 +178,105 @@ def AMI_Stergiou(data, L, to_matlab=False, n_bins=0):
         AB = pAB.data
         ami = np.sum(np.multiply(AB, np.log2(np.divide(AB, np.multiply(pA[A], pB[B])))))
 
-        if to_matlab:
-            import matlab
-            return ami
-        else:
-            return ami
     else:
         raise ValueError('Invalid input, read documentation for input options.')
-def plot_it(data, limit_of_time_lag, Signal_name):
-    a = list(AMI_Stergiou(data, limit_of_time_lag))
-    Time_lag = list(a[1][0])
-    print("this is the timelag")
+    # End of Stergiou code
+    Time_lag = list(ami[0])
+    AMI = list(ami[1])
+    #a = list(ami)
+    #print(ami)
+    #print(ami[0][0])
+    #print(ami[0][1])
+    #print(ami[0])
+    #print(ami[1])
+    #Time_lag = list(ami[0])
+    #AMI = list(ami[1])
+    #print(type(Time_lag))
     print(Time_lag)
-    print(type(Time_lag))
-    AMI = list(a[1][1])
+    print(AMI)
+    #print(type((ami)))
+    #print(type((ami[0][0])))
+    #print(type((ami[0][1])))
+    #print(type((ami[0])))
+    #print(type((ami[1])))
 
+    # Time_lag = list(a[1][0])
+    # print(type(Time_lag))
+    # print(Time_lag)
+    # = list(a[1][1])
     min_value = AMI[0]
     min_index = 0
-    for i in range(1, len(Time_lag)):
-        if AMI[i]<min_value:
+    for i in range(1, len((Time_lag))):
+        print(i)
+        if AMI[i] < min_value:
             min_value = AMI[i]
             min_index = i
     print("Minimum value of Average mutual information is " + str(min_value))
-    print("Time lag at which the Minimum value of Average mutual information appears is " + str(int(Time_lag[min_index])))
-    plt.scatter(Time_lag,AMI)
-    plt.axvline(x = Time_lag[min_index], color = 'red', label = 'Time lag at min AMI')
-    plt.ylabel("Average mutual information",fontsize = 15)
-    plt.xlabel("Time lag",fontsize = 15)
+    print(
+        "Time lag at which the Minimum value of Average mutual information appears is " + str(int(Time_lag[min_index])))
+    plt.scatter(Time_lag, AMI)
+    plt.axvline(x=Time_lag[min_index], color='red', label='Time lag at min AMI')
+    plt.ylabel("Average mutual information", fontsize=15)
+    plt.xlabel("Time lag", fontsize=15)
     plt.legend()
-    plt.title(Signal_name, fontsize = 20)
+    plt.title(Signal_name, fontsize=20)
     plt.show()
-    return min_value,int(Time_lag[min_index])
-
-x = np.arange(0,1000,0.1)   # start,stop,step
-dx = np.sin(x/5)
-rand_data = np.random.normal(loc=0, scale=1, size=1000)
-
-Chaotic_signal = plot_it(xs, 30, "Chaotic_signal")
-Periodic_signal = plot_it(dx, 100,"Periodic_signal")
-Random_signal = plot_it(rand_data,100,"Random_signal")
-print(Chaotic_signal)
-
-#pame tr gia embending dimensions
 
 
-import numpy as np
-
-
-def FNN(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2 ):
+def Culculation_of_embending_dimensions(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2):
     """
-      data - column oriented time series
-      tau - time delay
-      MaxDim - maximum embedding dimension
-      Rtol - threshold for the first criterion
-      Atol - threshold for teh second criterion
-      speed - a 0 for the code to calculate to the MaxDim or a 1 for the code
-              to finish once a minimum is found
-    Remarks
-    - This code determines the embedding dimension for a time series using
-      the false nearest neighbors method.
-    - Recommended values are Rtol=15 and Atol=2;
-    - Reference:   "Determining embedding dimension for phase-space
-                    reconstruction using a geometrical construction",
-                    M. B. Kennel, R. Brown, and H.D.I. Abarbanel,
-                    Physical Review A, Vol 45, No 6, 15 March 1992,
-                    pp 3403-3411.
-    Future Work
-    - Currently there are two methods of detecting a minimal percentage of
-      false nearest neighbors. One method checks for a minima or zero
-      percentage, the other looks for a limit. Currently only dim is
-      returned. This code can be modified to use a comprimise of the two.
-    Prior - Created by someone
-    Feb 2015 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
-               No changes were made to the algorithm. Checks were added to
-               provide information to the user in case of an error. The two
-               methods described in future work were also modified to work
-               cooperatively. In a previous version the second method (dim)
-               overwrote the first method (dim2).
-    Sep 2015 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
-               Previously, dim was found after the for loop, this version has
-               been modified to allow the code to find the minimum as it
-               calculates FNN. This is set within the inputs.
-               The check that was previously put in has been commented out.
-    Oct 2015 - Modified by John McCamley, email: unonbcf@unomaha.edu
-             - Embedded other required functions as subroutines.
-    Mar 2017 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
-             - Removed global variables in favor of passing the variables
-               from function to function directly. This significantly
-               improved performance. Checked that the calculated percentages
-               of nearest neighbors are the same as the previous version.
-    May 2020 - Modified by Ben Senderling, bmchnonan@unomaha.edu
-             - Added if statement checkeding data orientation.
-    Jul 2020 - Modified by Ben Senderling, bmchnonan@unomaha.edu
-             - Changed indexing throughout so the input data array doesn't
-               need to be reoriented. Changing this sped the code up an
-               average 11% on 10 test signals.
-             - Removed a couple small for loops and replaced with indexed
-               operations. Was also able to remove within function and
-               replaced with a single line of code.
-             - Removed perviously commented out lines of code that were no
-               longer used.
-    """
+          data - column oriented time series
+          tau - time delay
+          MaxDim - maximum embedding dimension
+          Rtol - threshold for the first criterion
+          Atol - threshold for teh second criterion
+          speed - a 0 for the code to calculate to the MaxDim or a 1 for the code
+                  to finish once a minimum is found
+        Remarks
+        - This code determines the embedding dimension for a time series using
+          the false nearest neighbors method.
+        - Recommended values are Rtol=15 and Atol=2;
+        - Reference:   "Determining embedding dimension for phase-space
+                        reconstruction using a geometrical construction",
+                        M. B. Kennel, R. Brown, and H.D.I. Abarbanel,
+                        Physical Review A, Vol 45, No 6, 15 March 1992,
+                        pp 3403-3411.
+        Future Work
+        - Currently there are two methods of detecting a minimal percentage of
+          false nearest neighbors. One method checks for a minima or zero
+          percentage, the other looks for a limit. Currently only dim is
+          returned. This code can be modified to use a comprimise of the two.
+        Prior - Created by someone
+        Feb 2015 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
+                   No changes were made to the algorithm. Checks were added to
+                   provide information to the user in case of an error. The two
+                   methods described in future work were also modified to work
+                   cooperatively. In a previous version the second method (dim)
+                   overwrote the first method (dim2).
+        Sep 2015 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
+                   Previously, dim was found after the for loop, this version has
+                   been modified to allow the code to find the minimum as it
+                   calculates FNN. This is set within the inputs.
+                   The check that was previously put in has been commented out.
+        Oct 2015 - Modified by John McCamley, email: unonbcf@unomaha.edu
+                 - Embedded other required functions as subroutines.
+        Mar 2017 - Modified by Ben Senderling, email: unonbcf@unomaha.edu
+                 - Removed global variables in favor of passing the variables
+                   from function to function directly. This significantly
+                   improved performance. Checked that the calculated percentages
+                   of nearest neighbors are the same as the previous version.
+        May 2020 - Modified by Ben Senderling, bmchnonan@unomaha.edu
+                 - Added if statement checkeding data orientation.
+        Jul 2020 - Modified by Ben Senderling, bmchnonan@unomaha.edu
+                 - Changed indexing throughout so the input data array doesn't
+                   need to be reoriented. Changing this sped the code up an
+                   average 11% on 10 test signals.
+                 - Removed a couple small for loops and replaced with indexed
+                   operations. Was also able to remove within function and
+                   replaced with a single line of code.
+                 - Removed perviously commented out lines of code that were no
+                   longer used.
+        """
     n = len(data) - tau * MaxDim
     data_array = np.array(data)
     RA = np.std(data_array)
@@ -397,11 +357,6 @@ def FNN(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2 ):
         print('No dimension found, dim set to MaxDim\n')
 
     # +1 because we started from zero and not one. Might change this in the future
-    print()
-    print()
-    print()
-    print()
-    print(type(dE))
     dE = list(dE)
     for i in range(len(dE)):
         dE[i] = dE[i] * 100
@@ -695,26 +650,42 @@ def overlap(yq, m_search, pqd, b_upper, b_lower):
 
     return L
 
-a = FNN(xs,16, 40, 0, "Mpampis")
-print(type(a))
-print(a)
-a = list(a)
-print(type(a))
-for i in range(len(a[0])):
-    a[0][i] = a[0][i]*100
-print(len(a[0]))
+def lorenz(x, y, z, s=10, r=28, b=2.667):
+    '''
+    x, y, z: Points
+    s, r, b: Parameters defining the Lorenz attractor
 
-print(a[0][1])
-plt.scatter(range(0,len(a[0])),a[0],color="red")
-plt.plot(range(0,len(a[0])),a[0])
-plt.ylabel("% of False Nearest Neighbors ",fontsize = 15)
-plt.xlabel("Dimension",fontsize = 15)
-plt.title("Chaotic Signal", fontsize = 20)
-plt.show()
+    x_dot, y_dot, z_dot: Values of the Lorenz attractor's partial derivatives
+    at the point x, y, z
+    '''
+
+    x_dot = s * (y - x)
+    y_dot = r * x - y - x * z
+    z_dot = x * y - b * z
+
+    return x_dot, y_dot, z_dot
 
 
+# Set other parameters
+dt = 0.01
+num_steps = 10000
 
+# Initial values require one or more
+xs = np.empty(num_steps + 1)
+ys = np.empty(num_steps + 1)
+zs = np.empty(num_steps + 1)
 
+# Initial values setting
+xs[0], ys[0], zs[0] = (0., 1., 1.05)
 
+# Step through "time", calculating the partial derivatives at the current point
+# and estimate the next point
+for i in range(num_steps):
+    x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i])
+    xs[i + 1] = xs[i] + (x_dot * dt)
+    ys[i + 1] = ys[i] + (y_dot * dt)
+    zs[i + 1] = zs[i] + (z_dot * dt)
 
+Time_delay = Time_delay(xs, 20, "Chaotic", 0)
+d = Culculation_of_embending_dimensions(xs, 16, 40, 0, "Vaggelis")
 
