@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 import matplotlib.pyplot as plt
-
+import numpy.polynomial.polynomial as poly
+import numpy.matlib as matlib
+import sys
 
 def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
     # Start of Stergiou code
@@ -148,7 +150,7 @@ def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
 
         v_AMI = v
         ami = v_AMI
-        print("edw eisai")
+
 
     elif isinstance(limit_of_time_lag, np.ndarray) or isinstance(limit_of_time_lag, list):
         x = data if isinstance(data, np.ndarray) else np.array(data)
@@ -192,8 +194,6 @@ def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
     #Time_lag = list(ami[0])
     #AMI = list(ami[1])
     #print(type(Time_lag))
-    print(Time_lag)
-    print(AMI)
     #print(type((ami)))
     #print(type((ami[0][0])))
     #print(type((ami[0][1])))
@@ -207,20 +207,20 @@ def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
     min_value = AMI[0]
     min_index = 0
     for i in range(1, len((Time_lag))):
-        print(i)
         if AMI[i] < min_value:
             min_value = AMI[i]
             min_index = i
     print("Minimum value of Average mutual information is " + str(min_value))
     print(
         "Time lag at which the Minimum value of Average mutual information appears is " + str(int(Time_lag[min_index])))
-    plt.scatter(Time_lag, AMI)
-    plt.axvline(x=Time_lag[min_index], color='red', label='Time lag at min AMI')
-    plt.ylabel("Average mutual information", fontsize=15)
-    plt.xlabel("Time lag", fontsize=15)
-    plt.legend()
-    plt.title(Signal_name, fontsize=20)
-    plt.show()
+    # plt.scatter(Time_lag, AMI)
+    # plt.axvline(x=Time_lag[min_index], color='red', label='Time lag at min AMI')
+    # plt.ylabel("Average mutual information", fontsize=15)
+    # plt.xlabel("Time lag", fontsize=15)
+    # plt.legend()
+    # plt.title(Signal_name, fontsize=20)
+    # plt.show()
+    return int(Time_lag[min_index])
 
 
 def Culculation_of_embending_dimensions(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2):
@@ -360,12 +360,12 @@ def Culculation_of_embending_dimensions(data, tau, MaxDim, speed, Signal_name,  
     dE = list(dE)
     for i in range(len(dE)):
         dE[i] = dE[i] * 100
-    plt.scatter(range(0, len(dE)), dE, color="red")
-    plt.plot(range(0, len(dE)), dE)
-    plt.ylabel("% of False Nearest Neighbors ", fontsize=15)
-    plt.xlabel("Dimension", fontsize=15)
-    plt.title(Signal_name, fontsize=20)
-    plt.show()
+    # plt.scatter(range(0, len(dE)), dE, color="red")
+    # plt.plot(range(0, len(dE)), dE)
+    # plt.ylabel("% of False Nearest Neighbors ", fontsize=15)
+    # plt.xlabel("Dimension", fontsize=15)
+    # plt.title(Signal_name, fontsize=20)
+    # plt.show()
     return (dE, dim + 1)
 
 
@@ -650,6 +650,7 @@ def overlap(yq, m_search, pqd, b_upper, b_lower):
 
     return L
 
+
 def lorenz(x, y, z, s=10, r=28, b=2.667):
     '''
     x, y, z: Points
@@ -666,26 +667,545 @@ def lorenz(x, y, z, s=10, r=28, b=2.667):
     return x_dot, y_dot, z_dot
 
 
+def LyE_R(X, Fs, tau, dim, *args):
+    """
+      inputs  - X, If this is a single dimentional array the code will use tau
+                   and dim to perform a phase space reconstruction. If this is
+                   a multidimentional array the phase space reconstruction will
+                   not be used.
+              - Fs, sampling frequency in units s^-1
+              - tau, time lag
+              - dim, embedding dimension
+      outputs - out, contains the starting matched pairs and the average line
+                     divergence from which the slope is calculated. The matched
+                     paris are columns 1 and 2. The average line divergence is
+                     column 3.
+      [LyES,LyEL,out]=LyE_Rosenstein_FC(X,Fs,tau,dim,slope,MeanPeriod,plot)
+     inputs  - slope, a four element array with the number of periods to find
+                       the regression lines for the short and long LyE. This is
+                       converted to indexes in the code.
+              - MeanPeriod, used in the slope calculation to find the short and
+                            long Lyapunov Exponents.
+              - plot, a boolean specifying if a figure should be created
+                      displaying the regression lines. This figure is visible
+                      by default.
+      outputs - LyES, short/local lyapunov exponent
+              - LyEL, long/orbital lyapunov exponent
+      Remarks
+      - This code is based on the algorithm presented by Rosenstein et al,
+        1992.
+      - Recommendations for the slope input can be found in the references
+        below. It is possible a long term exponent can not be found with your
+        inputs. If your selection exceeds the length of the data LyEL will
+        return as a NaN.
+      Future Work
+      - It may be possible to sped it up conciderably by re-organizing the for
+        loops. A database for the matched points would need to be created.
+      References
+      - Rosentein, Collins and De Luca; "A practical method for calculating
+        largest Lyapunov exponents from small data sets;" 1992
+      - Yang and Pai; "Can stability really predict an impending slip-related
+        fall among older adults?", 2014
+      - Brujin, van Dieen, Meijer, Beek; "Statistical precision and sensitivity
+        of measures of dynamic gait stability," 2009
+      - Dingwell, Cusumano; "Nonlinear time series analysis of normal and
+        pathological human walking," 2000
+      Version History
+      Jun 2008 - Created by Fabian Cignetti
+               - It is suspected this code was originally written by Fabian
+                 Cignetti
+      Apr 2017 - Revised by Ben Senderling
+               - Added comments section. Automated slope calculation. Added
+                 calculation of orbital exponent.
+      Jun 2020 - Revised by Ben Senderling
+               - Incorporated the subroutines directly into the code since they
+                 were only used in one location. Converted various for loops
+                 into indexed operations. This significantly improved the
+                 speed. Added if statements to compensate for errors with the
+                 orbital LyE. If the data is such an orbital LyE would not be
+                 found with the hardcoded regression line bounds. Made this
+                 slope and the file input optional. Removed the MeanPeriod as
+                 an imput and made it a calculation in the code. Added the out
+                 array so the matched pairs and average line distance can be
+                 reviewed, or used to finf the slope. Removed the progress
+                 output to the command window since it was sped up
+                 conciderably. Edited the figure output. Added code that allows
+                 a multivariable input to be entered as X.
+      Aug 2020 - Revised by Ben Senderling
+               - Removed mean period calculation and turned it into an input.
+                 This varies too widely between time series to have it
+                 automatically calculated in the script. It was replaced with
+                 tau to find paired points.
+    """
+    # Checked that X is vertically oriented. If X is a single or multiple
+    # dimentional array the length is assumed to be longer than the width. It
+    # is re-oriented if found to be different.
+    X = np.array(X, ndmin=2)
+    r, c = np.shape(X)
+    if r > c:
+        X = np.copy(X.transpose())
+
+    # Checks if a multidimentional array was entered as X.
+    if np.size(X, axis=0) > 1:
+        M = np.shape(X)[1]
+        Y = X
+    else:
+        # Calculate useful size of data
+        N = np.shape(X)[1]
+        M = N - (dim - 1) * tau
+
+        Y = np.zeros((M, dim))
+        for j in range(dim):
+            Y[:, j] = X[:, 0 + j * tau:M + j * tau]
+    # Find nearest neighbors
+
+    IND2 = np.zeros((1, M), dtype=int)
+    for i in range(M):
+        # Find nearest neighbor.
+        Yinit = np.matlib.repmat(Y[i], M, 1)
+        Ydiff = (Yinit - Y[0:M, :]) ** 2
+        Ydisti = np.sqrt(np.sum(Ydiff, axis=1))
+
+        # Exclude points too close based on dominant frequency.
+        range_exclude = np.arange(round((i + 1) - tau * 0.8 - 1), round((i + 1) + tau * 0.8))
+        range_exclude = range_exclude[(range_exclude >= 0) & (range_exclude < M)]
+        Ydisti[range_exclude] = 1e5
+
+        # find minimum distance point for first pair
+        IND2[0, i] = np.argsort(Ydisti)[0]
+
+    out = np.vstack((np.arange(M), np.ndarray.flatten(IND2)))
+
+    # Calculate distances between matched pairs.
+    DM = np.zeros((M, M))
+
+    IND2len = np.shape(IND2)[1]
+
+    for i in range(IND2len):
+        # The data can only be propagated so far from the matched pair.
+        EndITL = M - IND2[:, i][0]
+        if (M - IND2[:, i][0]) > (M - i):
+            EndITL = M - i
+
+        # Finds the distance between the matched paris and their propagated
+        # points to the end of the useable data.
+        DM[0:EndITL, i] = np.sqrt(
+            np.sum((Y[i:EndITL + i, :] - Y[IND2[:, i][0]:EndITL + IND2[:, i][0], :]) ** 2, axis=1))
+
+    # Calculates the average line divergence.
+    r, _ = np.shape(DM)
+
+    AveLnDiv = np.zeros(len(DM))
+    # NOTE: MATLAB version does not preallocate AveLnDiv, we could preallocate that.
+    for i in range(r):
+        distanceM = DM[i, :]
+        if np.sum(distanceM) != 0:
+            AveLnDiv[i] = np.mean(np.log(distanceM[distanceM > 0]))
+
+    out = np.vstack((out, AveLnDiv))
+
+    # Find LyES and LyEL
+    plot = 0  # To avoid errors later on
+
+
+    if len(sys.argv) == 0:
+        output_list = out
+    else:
+        slope = args[0]
+        MeanPeriod = args[1]
+        plot = args[2]
+        output_list = list()
+
+        time = np.arange(0, len(AveLnDiv)) / Fs / MeanPeriod
+
+        shortL = np.zeros(2, dtype=int)
+        longL = np.zeros(2, dtype=int)
+
+        # The values in slope are assumed to be the number of periods. These
+        # are converted into indexes.
+        if slope[0] == 0:
+            shortL[0] = 0  # A value of 0 periods cannot be used.
+        else:
+            shortL[0] = round(slope[0] * MeanPeriod * Fs)
+
+        shortL[1] = round(slope[1] * MeanPeriod * Fs)
+
+        longL[0] = round(slope[2] * MeanPeriod * Fs)
+        longL[1] = round(slope[3] * MeanPeriod * Fs)
+
+        # If the index chosen exceeds the length of AveLnDiv then that exponent
+        # is made a NaN.
+        if shortL[1] <= np.size(np.nonzero(AveLnDiv)):
+            slopeinterceptS = poly.polyfit(time[shortL[0]:shortL[1] + 1], AveLnDiv[shortL[0]:shortL[1] + 1], 1)
+            LyES = slopeinterceptS[1]
+            timeS = time[shortL[0]:shortL[1] + 1]
+            LyESline = poly.polyval(timeS, slopeinterceptS)
+        else:
+            LyES = np.nan
+
+        if longL[1] <= np.size(np.nonzero(AveLnDiv)):
+            slopeinterceptL = poly.polyfit(time[longL[0]:longL[1] + 1], AveLnDiv[longL[0]:longL[1] + 1], 1)
+            LyEL = slopeinterceptL[1]
+            timeL = time[longL[0]:longL[1] + 1]
+            LyELline = poly.polyval(timeL, slopeinterceptL)
+        else:
+            LyEL = np.nan
+
+        output_list.append(LyES)
+        output_list.append(LyEL)
+        output_list.append(out)
+
+    AveLnDiv = AveLnDiv[np.nonzero(AveLnDiv)]
+    time = time[0:len(AveLnDiv)]
+
+    # Plot data
+
+    if plot == 1:
+        plt.plot(time, AveLnDiv, color="black")
+        plt.title("LyE")
+        plt.xlabel("Periods (s)")
+        plt.ylabel("<ln(divergence)>")
+
+        if not np.isnan(LyES):
+            plt.plot(timeS, LyESline, color="red", linewidth=3, label="LyE_Short = {}".format(LyES))
+        if not np.isnan(LyEL):
+            plt.plot(timeL, LyELline, color="green", linewidth=3, label="LyE_Long = {}".format(LyEL))
+
+        plt.legend(loc="best")
+        plt.show()
+    return output_list
+
+def LyE_W(x, Fs, tau, dim, evolve):
+    """
+    inputs  - x, time series
+            - Fs, sampling frequency
+            - tau, time lag
+            - dim, embedding dimension
+            - evolve, parameter of the same name from Wolf's 1985 paper. This
+              code expects a number of frames as an input.
+    outputs - out, matrix detailing variables at each iteration
+            - LyE, largest lyapunov exponent
+    [out,LyE] = LyE_W20200820(X,Fs,tau,dim,evolve,SCALEMX,SCALEMN,ANGLMX,ZMULT)
+            - SCALEMX, length of which the local structure of the attractor
+              is no longer being probed
+            - SCALEMN, length below which noise predominates the attractors
+              behavior
+            - ANGLMX, maximum angle used to constrain replacements
+            - ZMULT, multiplier used to increase SCALEMX, unused in the
+              current version of the code
+    Remarks
+    - This code calculates the largest lyapunov exponent of a time series
+      according to the algorithm detailed in Wolf's 1985 paper. This code has
+      been aligned with his code published on the Matlab file exchange in
+      2016. It will largely find the same replacement points, the remaining
+      difference being in the replacement algorithm.
+    - The varargin can be used to specify some of the secondary parameters in
+      the algorithm. All of the extra arguements must be specified if any are
+      to be specified at all. Otherwise defaults are used.
+    - ZMULT is not currently used in the code but was in a previous version.
+      Its place in the subroutine inputs and outputs was kept in case it is
+      put back in.
+    - It should be noted that the process in the searching algorithm has a
+      significant impact on the resulting LyE.
+    - The code expects evolve to be the number of frames to use but we
+      encourage you to report this as a time-value in publications.
+    Prior - Created by Shane Wurdeman, unonbcf@unomaha.edu
+          - Adapted by Brian Knarr, unonbcf@unomaha.edu
+          - The code previously was influenced heavily by the FORTRAN syntax
+            published in Wolf's 1985 paper. These were modified to better
+            take advantage of MATLAB and speed up the code.
+    Mar 2017 - Modified by Ben Senderling, unonbcf@unomaha.edu
+             - Changed parameter "n" to "evolve."
+             - Changed "ZMULT" back to 1.
+             - Aligned the code with Wolf's Matlab File Exchange submission
+               to find the same replacement points. This is now essential his
+               algorithm but retains the speed of previous versions.
+    Apr 2019 - Modified by Ben Senderling, unonbcf@unomaha.edu
+             - Changed line 'range_exclude = range_exclude(range_exclude>=1 &
+               range_exclude<=NPT);' to say '>=1' instead of '>1' to prevent
+               self matches with the first point. This was indirectly
+               accounted for by setting distances less than SCALEMN to 0.
+             - '<SCALEMN' was removed from the code entirely and replaced with a
+               '<=0'. This was checked against joint angles and EMG data. The
+               change did not result in different pairs. This also removes an
+              input.
+    """
+
+    x = np.array([x])
+    SCALEMX = (np.max(x) - np.min(x)) / 10
+    ANGLMX = 30 * np.pi / 180
+    ZMULT = 1
+
+    DT = 1 / Fs
+
+    ITS = 0
+    distSUM = 0
+
+    if np.size(x, axis=0) == 1:
+        m = dim
+        N = np.size(x, axis=1)
+        M = N - (m - 1) * tau
+        Y = np.zeros((M, m))
+
+        for i in range(0, m):
+            Y[:, i] = x[:, (0 + i * tau):(M + i * tau)]
+
+        NPT = np.size(x, axis=1) - (dim - 1) * tau - evolve  # Size of useable data
+        Y = Y[0:NPT + evolve, :]
+
+    else:
+        Y = np.array(x)
+        NPT = np.size(Y, axis=0) - evolve
+
+    out = np.zeros((int(np.floor(NPT / evolve) + 1), 9), dtype="object")
+    thbest = 0
+    OUTMX = SCALEMX
+
+    # Find first pair
+
+    # Distance from current point to all other points
+    current_point = 0
+
+    Yinit = matlib.repmat(Y[current_point], NPT, 1)
+    Ydiff = (Yinit - Y[0:NPT, :]) ** 2
+    Ydisti = np.sqrt(np.sum(Ydiff, 1))
+
+    # Exclude points too close on path and close in distance
+    range_exclude = np.arange(current_point - 10, current_point + 10 + 1)
+    range_exclude = range_exclude[(range_exclude >= 0) & (range_exclude < NPT)]
+    Ydisti[Ydisti <= 0] = np.nan
+    Ydisti[range_exclude] = np.nan
+
+    # find minimum distance point for first pair
+    current_point_pair = np.argsort(Ydisti)[0]
+
+    for i in range(0, NPT, evolve):
+        current_point = i
+        # calculate starting and evolved distance
+        if current_point_pair + evolve < len(Y) and current_point + evolve < len(Y):
+            start_dist = np.linalg.norm(Y[current_point, :] - Y[current_point_pair, :])
+            end_dist = np.linalg.norm(Y[current_point + evolve, :] - Y[current_point_pair + evolve, :])
+        else:
+            start_dist = np.linalg.norm(Y[current_point, :] - Y[current_point_pair, :])
+            end_dist = np.linalg.norm(Y[current_point + evolve, :] - Y[current_point_pair + evolve - 1, :])
+
+        # calculate total distance so far
+        distSUM = distSUM + np.log2(end_dist / start_dist) / (evolve * DT)  # DT is sampling rate?!
+        ITS = ITS + 1  # count iterations
+        LyE = distSUM / ITS  # max Lyapunov exponent
+
+        #   CPP[i] = current_point_pair # Store found pairs
+
+        out[int(np.floor(i / evolve))] = [ITS, current_point, current_point_pair, start_dist, end_dist, LyE, OUTMX,
+                                          (thbest * 180 / np.pi), (ANGLMX * 180 / np.pi)]
+
+        ZMULT = 1
+
+        if end_dist < SCALEMX:
+            current_point_pair = current_point_pair + evolve
+            if current_point_pair > NPT:
+                current_point_pair = current_point_pair - evolve
+                flag = 1
+                (current_point_pair, ZMULT, ANGLMX, thbest, OUTMX) = get_next_point(flag, Y, current_point,
+                                                                                    current_point_pair, NPT, evolve,
+                                                                                    SCALEMX, ZMULT, ANGLMX)
+            continue
+        # find point pairing for next iteration
+        flag = 0
+        (current_point_pair, ZMULT, ANGLMX, thbest, OUTMX) = get_next_point(flag, Y, current_point, current_point_pair,
+                                                                            NPT, evolve, SCALEMX, ZMULT, ANGLMX)
+
+    return (out, LyE)
+
+
+def get_next_point(flag, Y, current_point, current_point_pair, NPT, evolve, SCALEMX, ZMULT, ANGLMX):
+    # Distance from evolved point to all other points
+    Yinit = np.matlib.repmat(Y[current_point + evolve, :], NPT, 1)
+    Ydiff = (Yinit - Y[0:NPT, :]) ** 2
+    Ydisti = np.sqrt(np.sum(Ydiff, axis=1))
+
+    # Exclude points too close on path and close in distance than noise
+    range_exclude = np.arange(current_point + evolve - 10, current_point + evolve + 10 + 1)
+    range_exclude = range_exclude[(range_exclude >= 0) & (range_exclude < NPT)]
+    Ydisti[range_exclude] = np.nan
+
+    if current_point_pair + evolve < len(Y) and current_point + evolve < len(Y):
+        end_dist = np.linalg.norm(Y[current_point + evolve, :] - Y[current_point_pair + evolve, :])
+    else:
+        end_dist = np.linalg.norm(Y[current_point + evolve, :] - Y[current_point_pair + evolve - 1, :])
+
+    # Vector from evolved point to all other points
+    Vnew = np.matlib.repmat(Y[current_point + evolve, :], NPT, 1) - Y[:NPT, :]
+
+    # Vector from evolved point to evolved point pair
+    if current_point_pair + evolve < len(Y) and current_point + evolve < len(Y):
+        PT1 = Y[current_point + evolve, :]
+        PT2 = Y[current_point_pair + evolve, :]
+    else:
+        PT1 = Y[current_point + evolve, :]
+        PT2 = Y[current_point_pair + evolve - 1, :]
+    Vcurr = PT1 - PT2
+
+    # Angle between evolved pair vector and all other vectors
+    # TODO: Had to add a summation here.
+    cosTheta = np.abs(np.divide(np.sum(Vcurr.T * Vnew, axis=1), (Ydisti * end_dist)))
+    theta = np.arccos(cosTheta)
+
+    # Search for next point
+    # -1 Meaning point not found.
+    next_point = -1
+    while next_point == -1:
+        (next_point, ZMULT, ANGLMX, thbest, SCALEMX) = find_next_point(flag, theta, Ydisti, SCALEMX, ZMULT, ANGLMX)
+
+    return next_point, ZMULT, ANGLMX, thbest, SCALEMX
+
+
+def find_next_point(flag, theta, Ydisti, SCALEMX, ZMULT, ANGLMX):
+    # Restrict search based on distance and angle
+    PotenDisti = np.copy(Ydisti)
+    PotenDisti[(Ydisti <= 0) | (theta >= ANGLMX)] = np.nan
+
+    next_point = -1
+    if flag == 0:
+        next_point = np.argsort(PotenDisti)[0]
+        # if closest angle point is within angle range -> point found and reset
+        # search space
+        if PotenDisti[next_point] <= SCALEMX:
+            ANGLMX = 30 * np.pi / 180
+            thbest = np.abs(theta[next_point])
+            return (next_point, ZMULT, ANGLMX, thbest, SCALEMX)
+        else:
+            next_point = -1
+            flag = 1
+    if flag == 1:
+        PotenDisti = np.copy(Ydisti)
+        PotenDisti[Ydisti <= 0] = np.nan
+        next_point = np.argsort(PotenDisti)[0]
+        thbest = ANGLMX
+
+    return (next_point, ZMULT, ANGLMX, thbest, SCALEMX)
+
+
+def Ent_Samp(data, m, r):
+    """
+    function SE = Ent_Samp20200723(data,m,r)
+    SE = Ent_Samp20200723(data,m,R) Returns the sample entropy value.
+    inputs - data, single column time seres
+            - m, length of vectors to be compared
+            - r, radius for accepting matches (as a proportion of the
+              standard deviation)
+
+    output - SE, sample entropy
+    Remarks
+    - This code finds the sample entropy of a data series using the method
+      described by - Richman, J.S., Moorman, J.R., 2000. "Physiological
+      time-series analysis using approximate entropy and sample entropy."
+      Am. J. Physiol. Heart Circ. Physiol. 278, H2039–H2049.
+    - m is generally recommendation as 2
+    - R is generally recommendation as 0.2
+    May 2016 - Modified by John McCamley, unonbcf@unomaha.edu
+             - This is a faster version of the previous code.
+    May 2019 - Modified by Will Denton
+             - Added code to check version number in relation to a server
+               and to automatically update the code.
+    Jul 2020 - Modified by Ben Senderling, bmchnonan@unomaha.edu
+             - Removed the code that automatically checks for updates and
+               keeps a version history.
+    Define r as R times the standard deviation
+    """
+    R = r * np.std(data)
+    N = len(data)
+
+    data = np.array(data)
+
+    dij = np.zeros((N - m, m + 1))
+    dj = np.zeros((N - m, 1))
+    dj1 = np.zeros((N - m, 1))
+    Bm = np.zeros((N - m, 1))
+    Am = np.zeros((N - m, 1))
+
+    for i in range(N - m):
+        for k in range(m + 1):
+            dij[:, k] = np.abs(data[k:N - m + k] - data[i + k])
+        dj = np.max(dij[:, 0:m], axis=1)
+        dj1 = np.max(dij, axis=1)
+        d = np.where(dj <= R)
+        d1 = np.where(dj1 <= R)
+        nm = d[0].shape[0] - 1  # subtract the self match
+        Bm[i] = nm / (N - m)
+        nm1 = d1[0].shape[0] - 1  # subtract the self match
+        Am[i] = nm1 / (N - m)
+
+    Bmr = np.sum(Bm) / (N - m)
+    Amr = np.sum(Am) / (N - m)
+
+    return -np.log(Amr / Bmr)
+
+
+def Ent_Ap(data, dim, r):
+    """
+    Ent_Ap20120321
+      data : time-series data
+      dim : embedded dimension
+      r : tolerance (typically 0.2)
+
+      Changes in version 1
+          Ver 0 had a minor error in the final step of calculating ApEn
+          because it took logarithm after summation of phi's.
+          In Ver 1, I restored the definition according to original paper's
+          definition, to be consistent with most of the work in the
+          literature. Note that this definition won't work for Sample
+          Entropy which doesn't count self-matching case, because the count
+          can be zero and logarithm can fail.
+
+      *NOTE: This code is faster and gives the same result as ApEn =
+             ApEnt(data,m,R) created by John McCamley in June of 2015.
+             -Will Denton
+
+    ---------------------------------------------------------------------
+    coded by Kijoon Lee,  kjlee@ntu.edu.sg
+    Ver 0 : Aug 4th, 2011
+    Ver 1 : Mar 21st, 2012
+    ---------------------------------------------------------------------
+    """
+
+    r = r * np.std(data)
+    N = len(data)
+    phim = np.zeros(2)
+    for j in range(2):
+        m = dim + j
+        phi = np.zeros(N - m + 1)
+        data_mat = np.zeros((N - m + 1, m))
+        for i in range(m):
+            data_mat[:, i] = data[i:N - m + i + 1]
+        for i in range(N - m + 1):
+            temp_mat = np.abs(data_mat - data_mat[i, :])
+            AorB = np.unique(np.where(temp_mat > r)[0])
+            AorB = len(temp_mat) - len(AorB)
+            phi[i] = AorB / (N - m + 1)
+        phim[j] = np.sum(np.log(phi)) / (N - m + 1)
+    AE = phim[0] - phim[1]
+    return AE
 # Set other parameters
-dt = 0.01
-num_steps = 10000
-
-# Initial values require one or more
-xs = np.empty(num_steps + 1)
-ys = np.empty(num_steps + 1)
-zs = np.empty(num_steps + 1)
-
-# Initial values setting
-xs[0], ys[0], zs[0] = (0., 1., 1.05)
-
-# Step through "time", calculating the partial derivatives at the current point
-# and estimate the next point
-for i in range(num_steps):
-    x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i])
-    xs[i + 1] = xs[i] + (x_dot * dt)
-    ys[i + 1] = ys[i] + (y_dot * dt)
-    zs[i + 1] = zs[i] + (z_dot * dt)
-
-Time_delay = Time_delay(xs, 20, "Chaotic", 0)
-d = Culculation_of_embending_dimensions(xs, 16, 40, 0, "Vaggelis")
+# dt = 0.01
+# num_steps = 10000
+#
+# # Initial values require one or more
+# xs = np.empty(num_steps + 1)
+# ys = np.empty(num_steps + 1)
+# zs = np.empty(num_steps + 1)
+#
+# # Initial values setting
+# xs[0], ys[0], zs[0] = (0., 1., 1.05)
+#
+# # Step through "time", calculating the partial derivatives at the current point
+# # and estimate the next point
+# for i in range(num_steps):
+#     x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i])
+#     xs[i + 1] = xs[i] + (x_dot * dt)
+#     ys[i + 1] = ys[i] + (y_dot * dt)
+#     zs[i + 1] = zs[i] + (z_dot * dt)
+#
+# Time_delay = Time_delay(xs, 20, "Chaotic", 0)
+# d = Culculation_of_embending_dimensions(xs, 16, 40, 0, "Vaggelis")
 
