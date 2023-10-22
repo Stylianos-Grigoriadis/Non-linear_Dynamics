@@ -4,12 +4,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import nolds
 import Nonlinear_Methods as nm
+import numpy as np
 
 data = pd.read_excel(
     r'C:\Users\Βασίλης\OneDrive - Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης\BiomechLabProjects\nonlinear dynamics\algorithm_tests\data.xlsx')
 white = data['White']
 pink = data['Pink']
 red = data['Red']
+
+print(data[['Pink', 'White']])
 print('PINK:')
 time_lag = (nm.Time_delay(pink, 30, 'pink'))
 print(time_lag)
@@ -28,7 +31,7 @@ print('Sample Entropy (UNO): ', nm.Ent_Samp(pink, 2, 0.2))
 print('Sample Entropy (nolds): ', nolds.sampen(pink))
 print('approximate Entropy (UNO): ', nm.Ent_Ap(pink, ed, 0.2))
 print()
-print('RQA:', nm.RQA(pink,TYPE='RQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=1,nargout=2))
+#print('RQA:', nm.RQA(np.array(pink,white),TYPE='cRQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=1,nargout=2))
 print()
 
 print('WHITE:')
@@ -49,7 +52,7 @@ print('Sample Entropy (UNO): ', nm.Ent_Samp(white, 2, 0.2))
 print('Sample Entropy (nolds): ', nolds.sampen(white))
 print('approximate Entropy (UNO): ', nm.Ent_Ap(white, ed, 0.2))
 print()
-print('RQA:\n', nm.RQA(white,TYPE='RQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=1,nargout=2))
+#print('RQA:\n', nm.RQA(white,TYPE='RQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=2,nargout=2))
 print()
 
 print('RED:')
@@ -70,7 +73,7 @@ print('Sample Entropy (UNO): ', nm.Ent_Samp(red, 2, 0.2))
 print('Sample Entropy (nolds): ', nolds.sampen(red))
 print('approximate Entropy (UNO): ', nm.Ent_Ap(red, ed, 0.2))
 print()
-print('RQA:\n', nm.RQA(red,TYPE='RQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=1,nargout=2))
+#print('RQA:\n', nm.RQA(red,TYPE='RQA',EMB=ed,DEL=time_lag,ZSCORE=0, NORM='non', SETPARA = 'radius', SETVALUE=2.5,LINELENGTH = None,PLOTOPTION=1,nargout=2))
 print()
 
 fig, (ax, ax1, ax2) = plt.subplots(3)

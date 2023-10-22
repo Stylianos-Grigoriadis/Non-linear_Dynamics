@@ -1571,8 +1571,8 @@ def RQA(DATA, TYPE, EMB, DEL, ZSCORE, NORM, LINELENGTH, SETPARA, SETVALUE, PLOTO
         RESULTS["EntrV"] = np.nan
         RESULTS["EntrW"] = np.nan
 
-    a[a >= np.negative(radius)] = 1.
-    a[a < np.negative(radius)] = 0.
+    # a[a >= np.negative(radius)] = 1.
+    # a[a < np.negative(radius)] = 0.
 
     RP = rotate(1. - a, 90)
 
