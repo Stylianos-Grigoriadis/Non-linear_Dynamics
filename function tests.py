@@ -11,7 +11,11 @@ data = pd.read_excel(
 white = data['White']
 pink = data['Pink']
 red = data['Red']
-
+fig,(ax,ax1,ax2) = plt.subplots(3)
+ax.plot(white)
+ax1.plot(pink)
+ax2.plot(red)
+plt.show()
 print(data[['Pink', 'White']])
 print('PINK:')
 time_lag = (nm.Time_delay(pink, 30, 'pink'))

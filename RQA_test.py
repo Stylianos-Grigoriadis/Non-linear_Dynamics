@@ -2,7 +2,7 @@ import lib
 import colorednoise as cn
 import pandas as pd
 import matplotlib.pyplot as plt
-import nolds
+
 import Nonlinear_Methods as nm
 import numpy as np
 
