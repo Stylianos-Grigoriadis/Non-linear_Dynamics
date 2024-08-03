@@ -228,7 +228,7 @@ def Time_delay(data, limit_of_time_lag, Signal_name, n_bins=0, ):
     return int(Time_lag[min_index])
 
 
-def Culculation_of_embending_dimensions(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2):
+def Calculation_of_embending_dimensions(data, tau, MaxDim, speed, Signal_name,  Rtol = 15, Atol = 2):
     """
           data - column oriented time series
           tau - time delay
